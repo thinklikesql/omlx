@@ -545,7 +545,33 @@ class BatchedEngine(BaseEngine):
                     ),
                 )
             except Exception:
-                logger.debug("oQ A8 prefill patch not applied", exc_info=True)
+                logger.debug("Qwen oQ A8 prefill patch not applied", exc_info=True)
+
+        # oQ mixed-bit QxA8 prefill kernels for Muse Glimmer — mirrors the
+        # Qwen3.5 block above but for the Muse Glimmer SwiGLU MLP surface
+        # used by the text-only BatchedEngine when force_lm=True (benchmark
+        # path). The VLM path is covered in VLMBatchedEngine._load_complete.
+        if getattr(self._model_settings, "a8_prefill_enabled", False):
+            try:
+                from ..patches.muse_glimmer_oq_a8 import (
+                    apply_muse_glimmer_oq_a8_patch,
+                )
+
+                apply_muse_glimmer_oq_a8_patch(
+                    self._model,
+                    min_tokens=int(
+                        getattr(
+                            self._model_settings,
+                            "a8_prefill_min_tokens",
+                            128,
+                        )
+                    ),
+                )
+            except Exception:
+                logger.debug(
+                    "Muse Glimmer oQ A8 prefill patch not applied",
+                    exc_info=True,
+                )
 
         ane_backend = ane_prefill_backend(self.model_type)
         ane_enabled = getattr(self._model_settings, "qwen35_ane_prefill_enabled", False)

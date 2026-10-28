@@ -2603,6 +2603,28 @@ class VLMBatchedEngine(BaseEngine):
             except Exception:
                 logger.debug("oQ A8 prefill patch not applied", exc_info=True)
 
+        # oQ mixed-bit QxA8 prefill kernels for Muse Glimmer (SwiGLU MLP +
+        # standard MHA attention with gate_proj). Mirrors the Qwen3.5 block
+        # above: reuses the same NAX kernels, only the module/class surfaces
+        # differ. Gated on the per-model setting so a model loaded with the
+        # toggle off is never routed.
+        if getattr(self._model_settings, "a8_prefill_enabled", False):
+            try:
+                from ..patches.muse_glimmer_oq_a8 import (
+                    apply_muse_glimmer_oq_a8_patch,
+                )
+
+                apply_muse_glimmer_oq_a8_patch(
+                    self._vlm_model,
+                    min_tokens=int(
+                        getattr(self._model_settings, "a8_prefill_min_tokens", 128)
+                    ),
+                )
+            except Exception:
+                logger.debug(
+                    "muse_glimmer oQ A8 prefill patch not applied", exc_info=True
+                )
+
         if ane_count or getattr(self._vlm_model, "_omlx_ane_gdn_prefill_count", 0):
             try:
                 from ..patches.qwen35_ane_prefill import (

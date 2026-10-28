@@ -236,6 +236,11 @@ print(deleted)
     return deleted, len(node_ids)
 
 
+def _normalize_config_type(s) -> str:
+    """Normalize a config model type for case/dash/underscore-insensitive compare."""
+    return str(s or "").lower().replace("-", "_")
+
+
 def _oq_a8_model_supported(config_type: str | None) -> bool:
     """True for the model families the A8 prefill paths can route.
 
@@ -244,7 +249,7 @@ def _oq_a8_model_supported(config_type: str | None) -> bool:
     routed-expert A8, so a ``qwen4`` prefix would admit unvalidated models.
     """
     config_type = str(config_type or "").lower().replace("-", "_")
-    return config_type in ("qwen4_exp", "deepseek_v41") or config_type.startswith(
+    return config_type in ("qwen4_exp", "deepseek_v41", "muse_glimmer") or config_type.startswith(
         ("qwen3_5", "qwen3_6", "qwen3_8")
     )
 
@@ -2298,7 +2303,7 @@ def _reasoning_levels(model_info: dict, model_type: str, forced: bool) -> list[s
 
 def _model_options(model_info: dict, settings) -> dict:
     """Describe model controls once for the web and native settings clients."""
-    model_type = (model_info.get("config_model_type") or "").lower().replace("-", "_")
+    model_type = _normalize_config_type(model_info.get("config_model_type"))
     is_k2 = model_type == "k2_horizon"
     thinking_modes = ["auto", "on_limit"] if is_k2 else [
         "auto", "on_unlimit", "on_limit", "off"
@@ -2323,6 +2328,10 @@ def _model_options(model_info: dict, settings) -> dict:
         # Lets the settings UIs hide the toggle the save would reject.
         "a8_prefill_supported": (
             _oq_a8_model_supported(model_type) and _oq_a8_kernels_available()
+        ),
+        "muse_glimmer_oq_a8_supported": (
+            _muse_glimmer_oq_a8_model_supported(model_type)
+            and _oq_a8_kernels_available()
         ),
         "gpu_power_limit_supported": gpu_power.gpu_power_cap_supported(),
     }
@@ -3643,6 +3652,22 @@ def _validate_model_settings(entry, settings):
                     "A8 prefill needs the native prefill kernels and a Metal "
                     "device with native INT8 tensor operations (M5-series or "
                     "newer)."
+                ),
+            )
+        if settings.get("qwen35_ane_prefill_enabled"):
+            raise HTTPException(
+                status_code=400,
+                detail="ANE prefill and A8 prefill cannot both be enabled.",
+            )
+    if settings.get("a8_prefill_enabled"):
+        if not _muse_glimmer_oq_a8_model_supported(
+            getattr(entry, "config_model_type", "")
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Muse Glimmer oQ A8 prefill is available only for Muse "
+                    "Glimmer models."
                 ),
             )
         if settings.get("qwen35_ane_prefill_enabled"):

@@ -189,12 +189,12 @@ def resolve_vlm_mtp_conflicts(data: dict) -> tuple:
 def resolve_qwen35_prefill_conflicts(data: dict) -> tuple:
     """Clear ``a8_prefill_enabled`` when ANE prefill is also on.
 
-    Both wrap ``Qwen3_5MLP.__call__`` and claim the same projections, so
-    enabling both leaves whichever patched last in charge -- with the other
-    silently inert. ANE prefill wins because it is the older setting and the
-    one a saved profile is more likely to have been tuned around. Used for
-    dicts that predate the exclusivity rule so ``__post_init__`` does not
-    reject the whole blob.
+    The oQ A8 prefill patches (Qwen3.5, Muse Glimmer) and ANE prefill all
+    wrap the same MLP/projection surfaces, so enabling both leaves whichever
+    patched last in charge -- with the other silently inert. ANE prefill wins
+    because it is the older setting and the one a saved profile is more likely
+    to have been tuned around. Used for dicts that predate the exclusivity rule
+    so ``__post_init__`` does not reject the whole blob.
     """
     if not (data.get("a8_prefill_enabled") and data.get("qwen35_ane_prefill_enabled")):
         return data, []
@@ -835,6 +835,7 @@ class ModelSettingsManager:
                         model_id,
                         ", ".join(conflicts),
                     )
+                before = model_data
                 model_data, prefill_conflicts = resolve_qwen35_prefill_conflicts(
                     model_data
                 )

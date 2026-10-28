@@ -1286,6 +1286,7 @@ final class ModelSettingsScreenVM {
         // those validated families have routed-expert A8, not every qwen4*.
         if isQwen4Exp || isDeepseekV41 { return true }
         let type = (model?.configModelType ?? "").lowercased().replacingOccurrences(of: "-", with: "_")
+        if type.hasPrefix("muse_glimmer") { return true }
         return ["qwen3_5", "qwen3_6", "qwen3_8"].contains { type.hasPrefix($0) }
     }
 

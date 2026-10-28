@@ -42,6 +42,10 @@ _MIN_TOKENS_DEFAULT = 128
 # Its presence is the opt-in.
 _CONFIG_ATTR = "_omlx_oq_a8_config"
 
+# First successful kernel invocation per process gets an info log so operators
+# can confirm the int8-A8 path is live; subsequent hits log at debug.
+_KERNEL_ACTIVATED_LOGGED = False
+
 
 @dataclass(frozen=True)
 class OqA8Config:
@@ -327,6 +331,26 @@ def apply_plan(linear: Any, stage: StageA, plan: OqA8Plan) -> mx.array:
     from omlx.custom_kernels.quant_matmul import fast
 
     weight, scales, biases = _prepared_weights(linear)
+    global _KERNEL_ACTIVATED_LOGGED
+    if not _KERNEL_ACTIVATED_LOGGED:
+        logger.info(
+            "oq A8 kernel activated: bits=%d, group_size=%d, kernel=%s, "
+            "module=%s, act_mode=%s, packed=%s",
+            plan.bits,
+            plan.group_size,
+            plan.kernel,
+            getattr(linear, "_omlx_module_name", "?"),
+            plan.act_mode,
+            plan.packed,
+        )
+        _KERNEL_ACTIVATED_LOGGED = True
+    else:
+        logger.debug(
+            "oq A8 kernel dispatch: bits=%d kernel=%s module=%s",
+            plan.bits,
+            plan.kernel,
+            getattr(linear, "_omlx_module_name", "?"),
+        )
     return fast.oq_a8_qmm_t(
         stage.qa,
         stage.sa,
@@ -537,7 +561,14 @@ def _prefill_linear_backend(linear: Any, x: mx.array) -> mx.array | None:
     """
     config = _config_for(linear)
     plan = classify_linear(linear) if config is not None else None
-    if plan is None or not _shape_eligible(x, config):
+    if plan is None:
+        return None
+    if not _shape_eligible(x, config):
+        logger.debug(
+            "oq A8 backend declined: shape=%s x.dtype=%s (need f16/bf16, "
+            "tokens>=%d, hidden%%64==0)",
+            tuple(x.shape), x.dtype, config.min_tokens,
+        )
         return None
     return apply_plan(linear, stage_a(x, plan.act_mode, plan.layout), plan)
 

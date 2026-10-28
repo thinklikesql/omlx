@@ -1340,6 +1340,17 @@ class EnginePool:
         if oq_a8_active:
             add("a8_prefill_min_tokens", data.get("a8_prefill_min_tokens", 128))
 
+        # Muse Glimmer uses the generic a8_prefill controls
+        muse_glimmer_oq_a8_active = bool(
+            data.get("a8_prefill_enabled", False)
+        )
+        add("muse_glimmer_oq_a8_enabled", muse_glimmer_oq_a8_active)
+        if muse_glimmer_oq_a8_active:
+            add(
+                "muse_glimmer_oq_a8_min_tokens",
+                data.get("a8_prefill_min_tokens", 128),
+            )
+
         ane_active = bool(data.get("qwen35_ane_prefill_enabled", False))
         model_type = entry.config_model_type if entry else None
         backend = ane_prefill_backend(model_type)

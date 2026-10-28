@@ -26475,6 +26475,18 @@
         }
       }
     },
+    "settings.summary.muse_glimmer_oq_a8" : {
+      "comment" : "Short name of Muse Glimmer INT8 activation prefill in the Acceleration row value",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "INT8 Prefill"
+          }
+        }
+      }
+    },
     "settings.summary.turboquant" : {
       "comment" : "TurboQuant KV in the Memory Saving row value; placeholder is the bit width",
       "extractionState" : "manual",
