@@ -1892,8 +1892,15 @@ async def run_benchmark(run: BenchmarkRun, engine_pool: Any) -> None:
         lightning_mtp_active = model_settings is not None and getattr(
             model_settings, "mtp_enabled", False
         )
+        # Muse Glimmer oQ A8 prefill requires the VLMBatchedEngine path; if
+        # the setting is enabled, do not force the LM-only BatchedEngine so
+        # the int8 prefill patch is exercised during benchmarks.
+        muse_glimmer_oq_a8_active = (
+            model_settings is not None
+            and getattr(model_settings, "muse_glimmer_oq_a8_enabled", False)
+        )
         force_lm = request.force_lm_engine or not (
-            external_vlm_mtp_active or lightning_mtp_active
+            external_vlm_mtp_active or lightning_mtp_active or muse_glimmer_oq_a8_active
         )
         engine = await engine_pool.get_engine(
             request.model_id,

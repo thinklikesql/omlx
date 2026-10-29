@@ -37,12 +37,10 @@ _PROJECTION_NAMES = ("q_proj", "k_proj", "v_proj", "o_proj", "gate_proj")
 # Module-path prefix whose QuantizedLinear projections may be reclassified.
 # Muse Glimmer has two model namespaces depending on the engine path:
 # - mlx_vlm.models.muse_glimmer.* — VLMBatchedEngine (vlm path)
-# - mlx_lm.models.muse_glimmer.* — BatchedEngine (force_lm=True, benchmark path)
 # Both must be matched so attention projections are reclassified to the
 # int8-A8 first-refusal wrapper regardless of which loader produced the model.
 _MUSE_GLIMMER_MODULE_PREFIXES = (
     "mlx_vlm.models.muse_glimmer.",
-    "mlx_lm.models.muse_glimmer.",
 )
 
 

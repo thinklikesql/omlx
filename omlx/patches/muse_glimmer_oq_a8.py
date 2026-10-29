@@ -45,11 +45,13 @@ _LINEAR_PATCHED = False
 #   (interactive/vlm path).
 # - mlx_lm.models.muse_glimmer.MLP — used by BatchedEngine when
 #   force_lm=True (benchmark path, since Muse Glimmer is not in
-#   VLM_NATIVE_TEXT_MODEL_TYPES).
+#   VLM_NATIVE_TEXT_MODEL_TYPES).  # NOTE: mlx_lm.models.muse_glimmer does not exist in this repo;
+#   the above comment is a copy-paste artifact from Qwen and is kept for reference only.
+#   Only mlx_vlm.models.muse_glimmer.language.MLP is actually vendored.
 # Both must be patched so the int8 kernel fires regardless of engine.
 _MUSE_GLIMMER_MLP_TARGETS = (
     ("mlx_vlm.models.muse_glimmer.language", "MLP"),
-    ("mlx_lm.models.muse_glimmer", "MLP"),
+    # ("mlx_lm.models.muse_glimmer", "MLP"),  # disabled: module does not exist in repo
 )
 
 
