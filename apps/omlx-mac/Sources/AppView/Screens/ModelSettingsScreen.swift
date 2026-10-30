@@ -2094,6 +2094,8 @@ private struct AccelerationSection: View {
                     }
                 }
             }
+        }
+    }
     private var hasFamilyRows: Bool {
         vm.isDeepseekV41 || vm.isQwen4Exp || vm.showsA8Prefill
     }
